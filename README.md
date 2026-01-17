@@ -1,4 +1,4 @@
-# OpenWrt Speedtest-go to Discord Webhook (v2.0)
+# OpenWrt Speedtest-go to Discord Webhook
 
 [![OpenWrt](https://img.shields.io/badge/Router-OpenWrt-blue.svg)](https://openwrt.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -10,7 +10,7 @@ It executes a network speed test using `speedtest-go` and sends a detailed, form
 
 ## 🚀 Key Features
 
-- **Robust JQ Parsing (v2.0)** Now uses `jq` for reliable JSON processing. This ensures that special characters in server names or ISP data don't break the script, while maintaining high performance.
+- **Robust JQ Parsing** Now uses `jq` for reliable JSON processing. This ensures that special characters in server names or ISP data don't break the script, while maintaining high performance.
 
 - **Advanced Packet Loss Analysis** Includes specialized logic to process the relationship between sent and received packets. This ensures high-precision reporting (0.00%) by correctly identifying control packets and data flow.
 
@@ -54,8 +54,6 @@ To run the speed test automatically every hour, add the following scheduled task
 ---
 
 ## 🛠 Why this script?
-
-Version 2.0 moves away from `eval` and manual string manipulation. By leveraging `jq`, we achieve:
 
 1. **Security:** No use of `eval`, eliminating potential shell injection risks.
 2. **Reliability:** Proper JSON handling regardless of the input data format.
