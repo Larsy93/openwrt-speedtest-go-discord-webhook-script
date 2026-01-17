@@ -12,7 +12,7 @@ It executes a network speed test using `speedtest-go` and sends a detailed, form
 
 - **Robust JQ Parsing (v2.0)** Now uses `jq` for reliable JSON processing. This ensures that special characters in server names or ISP data don't break the script, while maintaining high performance.
 
-- **Improved Packet Loss Logic** Uses custom logic to handle `speedtest-go` specific quirks (Sent vs Max packets), providing accurate 0.00% reporting even when extra control packets are sent.
+- **Advanced Packet Loss Analysis** Includes specialized logic to process the relationship between sent and received packets. This ensures high-precision reporting (0.00%) by correctly identifying control packets and data flow.
 
 - **ICMP Precision** Uses ICMP ping mode for more accurate latency measurements, avoiding the overhead of HTTP/TCP handshakes.
 
