@@ -9,52 +9,73 @@ LOG_FILE="/root/speedtest.log"
 
 DATE=$(date "+%Y-%m-%d %H:%M")
 
-# Run Speedtest-go SINGLE THREAD ICMP PING
+# Run Speedtest-go (Single Thread, ICMP Ping)
 RAW_JSON=$(/usr/bin/speedtest-go --thread 1 --ping-mode=icmp --json 2>&1)
 
 if echo "$RAW_JSON" | grep -q "dl_speed"; then
     
-    # Read and Parse JSON
-    eval $(echo "$RAW_JSON" | awk -F'[:,]' '{
-        for(i=1;i<=NF;i++){
-            if($i ~ /"dl_speed"/) dl=$(i+1)
-            if($i ~ /"ul_speed"/) ul=$(i+1)
-            if($i ~ /"latency"/) png=$(i+1)
-            if($i ~ /"min_latency"/) pmin=$(i+1)
-            if($i ~ /"max_latency"/) pmax=$(i+1)
-            if($i ~ /"jitter"/) jit=$(i+1)
-            if($i ~ /"distance"/) dst=$(i+1)
-            if($i ~ /"sent"/) sent=$(i+1)
-            if($i ~ /"max"/) max=$(i+1)
-            if($i ~ /"sponsor"/) spon=$(i+1)
+    # 1. PARSING: Extract and convert all data using JQ
+    PARSED=$(echo "$RAW_JSON" | jq -r '
+        .servers[0] | 
+        [
+            (.dl_speed / 125000), 
+            (.ul_speed / 125000), 
+            (.latency / 1000000), 
+            (.min_latency / 1000000), 
+            (.max_latency / 1000000), 
+            (.jitter / 1000000), 
+            .sponsor, 
+            .distance,
+            .packet_loss.sent,
+            .packet_loss.max
+        ] | join("|")')
+
+    # 2. ASSIGN: Split values into variables
+    IFS="|" read -r DL UL PNG PMIN PMAX JIT SRV DST SENT MAX <<EOF
+$PARSED
+EOF
+
+    # 3. FORMAT: Rounding
+    DL_MBPS=$(printf "%.2f" $DL)
+    UL_MBPS=$(printf "%.2f" $UL)
+    PNG_MS=$(printf "%.2f" $PNG)
+    PMIN_MS=$(printf "%.2f" $PMIN)
+    PMAX_MS=$(printf "%.2f" $PMAX)
+    JIT_MS=$(printf "%.2f" $JIT)
+    DST_KM=$(printf "%.1f" $DST)
+
+    # 4. PACKET LOSS: Your verified logic (diff = sent - max)
+    LOSS_VAL=$(awk -v s="$SENT" -v m="$MAX" 'BEGIN { 
+        diff = s - m;
+        if (diff <= 1 || s == 0) {
+            print "0.00"
+        } else {
+            printf "%.2f", (diff * 100) / s
         }
-        # Conversions (Bytes->Mbps, Nano->Milli)
-        printf "DL_MBPS=%.2f\n", dl/125000
-        printf "UL_MBPS=%.2f\n", ul/125000
-        printf "PNG_MS=%.2f\n", png/1000000
-        printf "PMIN_MS=%.2f\n", pmin/1000000
-        printf "PMAX_MS=%.2f\n", pmax/1000000
-        printf "JIT_MS=%.2f\n", jit/1000000
-        printf "DST_KM=%.1f\n", dst
-        printf "SRV=%s\n", spon
-        
-        # Packet loss logic
-        diff = sent - max
-        if (diff <= 1) printf "LOSS_VAL=0.00\n"
-        else printf "LOSS_VAL=%.2f\n", (diff * 100) / sent
     }')
 
-    # Create Content (Using variable FRIENDLY_NAME)
-    CONTENT="**$FRIENDLY_NAME**\\n$DATE\\nServer: ${SRV//\"/} ($DST_KM km)\`\`\`\\nPing:     $PNG_MS ms [$PMIN_MS-$PMAX_MS]\\nDownload: $DL_MBPS Mbps\\nUpload:   $UL_MBPS Mbps\\nJitter:   $JIT_MS ms\\nLoss:     $LOSS_VAL%\\n\`\`\`"
-    
-    # Secure JSON and log
-    SAFE_CONTENT=$(echo "$CONTENT" | sed 's/"/\\"/g')
-    echo "$DATE | Ping: $PNG_MS ms Download: $DL_MBPS Mbit/s Upload: $UL_MBPS Mbit/s" >> $LOG_FILE
+    # 5. CONTENT: Build the Discord post
+    CONTENT="**$FRIENDLY_NAME**
+$DATE
+Server: $SRV ($DST_KM km)
+\`\`\`
+Ping:     $PNG_MS ms [$PMIN_MS-$PMAX_MS]
+Download: $DL_MBPS Mbps
+Upload:   $UL_MBPS Mbps
+Jitter:   $JIT_MS ms
+Loss:     $LOSS_VAL%
+\`\`\`"
+
+    # Log to file
+    echo "$DATE | Ping: $PNG_MS ms Download: $DL_MBPS Mbps Upload: $UL_MBPS Mbps" >> "$LOG_FILE"
 
 else
-    SAFE_CONTENT="**$FRIENDLY_NAME - ERROR**\\n$DATE\\nSpeedtest misslyckades."
-    echo "$DATE | Speedtest Failed" >> $LOG_FILE
+    CONTENT="**$FRIENDLY_NAME - ERROR**
+$DATE
+Speedtest failed."
+    echo "$DATE | Speedtest Failed" >> "$LOG_FILE"
 fi
 
-# Send to Discord (Using variables DISCORD_USER och SAFE_CONTENT)
-/usr/bin/curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"$DISCORD_USER\", \"content\": \"$SAFE_CONTENT\"}" "$WEBHOOK_URL" > /dev/null
+# 6. SEND: Post to Discord using a safe JQ-generated payload
+PAYLOAD=$(jq -n --arg user "$DISCORD_USER" --arg cont "$CONTENT" '{username: $user, content: $cont}')
+/usr/bin/curl -s -H "Content-Type: application/json" -X POST -d "$PAYLOAD" "$WEBHOOK_URL" > /dev/null
