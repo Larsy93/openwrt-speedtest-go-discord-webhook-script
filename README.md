@@ -1,4 +1,4 @@
-# OpenWrt Speedtest-go to Discord Webhook
+# OpenWrt Speedtest-go to Discord Webhook Script
 
 [![OpenWrt](https://img.shields.io/badge/Router-OpenWrt-blue.svg)](https://openwrt.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
