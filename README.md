@@ -52,7 +52,7 @@ Before installing, ensure the following packages are installed on your router:
 
 To run the speed test automatically every hour, add the following scheduled task via LuCI or `crontab -e`:
 
-    0 * * * * /root/speedtest.sh
+    0 * * * * /root/speedtestdiscord.sh
 
 ---
 
