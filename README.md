@@ -31,7 +31,7 @@ Before installing, ensure the following packages are installed on your router:
 
 ```bash
 opkg update
-opkg install speedtest-go curl
+opkg install speedtest-go curl jq
 ```
 
 ---
