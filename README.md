@@ -3,7 +3,7 @@
 [![OpenWrt](https://img.shields.io/badge/Router-OpenWrt-blue.svg)](https://openwrt.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A high-performance, resource-optimized shell script for routers running **OpenWrt or pretty much any other linux device**.
+A high-performance, resource-optimized shell script for routers running **OpenWrt** or pretty much any other linux device.
 It executes a network speed test using `speedtest-go` and sends a detailed, formatted report to a Discord channel via Webhooks.
 
 ### Example Discord Message(It has full UTF-8 emoji support)
