@@ -46,7 +46,7 @@ opkg install speedtest-go curl
 chmod +x /root/speedtest.sh
 ```
 
-3. Open the script and configure the following variables:
+3. Edit the script and configure the following variables:
 
 - `WEBHOOK_URL` – Your Discord Webhook URL  
 - `FRIENDLY_NAME` – Name of your router or location (e.g. Home Router)  
